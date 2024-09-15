@@ -1,0 +1,57 @@
+@mixin transition($option...) {
+  transition: $option;
+  -webkit-transition: $option;
+  -moz-transition: $option;
+  -ms-transition: $option;
+  -o-transition: $option;
+}
+@mixin border-radius($option...) {
+  border-radius: $option;
+  -webkit-border-radius: $option;
+  -moz-border-radius: $option;
+  -ms-border-radius: $option;
+  -o-border-radius: $option;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+#app {
+  #main {
+    height: inherit;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+
+    #wrap {
+      padding: 2rem;
+
+      #answerWrap {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 2rem;
+
+        .answer {
+          padding: 0.5rem;
+          font-size: 1rem;
+          font-weight: 700;
+          box-shadow: 2px 2px 8px 0 #565656;
+          @include border-radius(0.2rem);
+          @include transition(100ms ease-in-out);
+
+          &:hover {
+            cursor: pointer;
+            box-shadow: 0px 0px 0px 0 #565656;
+            background-color: #56565656;
+          }
+        }
+      }
+    }
+  }
+}
