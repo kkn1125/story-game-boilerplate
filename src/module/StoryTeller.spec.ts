@@ -50,6 +50,7 @@ describe("[StoryTeller] 테스트", () => {
     logger.debug("스토리라인 생성");
 
     storyTeller.start();
+
     logger.debug("스토리라인 시작");
 
     const status = storyTeller.status;

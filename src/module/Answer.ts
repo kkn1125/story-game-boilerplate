@@ -3,7 +3,7 @@ import { Story } from "./Story";
 export class Answer {
   parent!: Story;
   content!: string;
-  next: Story | null = null;
+  next: string | null = null;
 
   constructor(props?: Partial<ExtractType<Answer>>) {
     if (props) {

@@ -3,6 +3,7 @@ import { Story } from "./Story";
 import { StoryTellerStep } from "@enum/StoryTellerStep";
 import { Logger } from "@util/Logger";
 import { ILogModule } from "./ILogModule";
+import { getLastItem } from "@util/getLastItem";
 
 export class StoryTeller implements ILogModule {
   status: StoryStatus = StoryStatus.Wait;
@@ -14,6 +15,16 @@ export class StoryTeller implements ILogModule {
 
   constructor() {
     this.logger = new Logger(this);
+  }
+
+  goto(story: Story) {
+    this.currentStory = story;
+  }
+
+  prev() {
+    const story = this.histories.pop();
+    if (!story) return;
+    this.goto(story);
   }
 
   notify(step: StoryTellerStep) {
@@ -65,16 +76,18 @@ export class StoryTeller implements ILogModule {
     this.notify(StoryTellerStep.Start);
   }
 
-  talk() {
-    if (!this.isStatusEqualsTo(StoryStatus.Start, StoryStatus.Talk)) {
-      return;
-    }
-    this.setStatus(StoryStatus.Talk);
-    this.notify(StoryTellerStep.Talk);
-    return this.currentStory;
-  }
+  // talk() {
+  //   if (!this.isStatusEqualsTo(StoryStatus.Start, StoryStatus.Talk)) {
+  //     return;
+  //   }
+  //   this.setStatus(StoryStatus.Talk);
+  //   this.notify(StoryTellerStep.Talk);
+  //   return this.currentStory;
+  // }
 
   next(answerIndex: number) {
+    this.setStatus(StoryStatus.Talk);
+
     this.notify(StoryTellerStep.BeforeNext);
 
     if (!this.isStatusEqualsTo(StoryStatus.Start, StoryStatus.Talk)) {
@@ -86,14 +99,29 @@ export class StoryTeller implements ILogModule {
     const answer = this.currentStory?.answers[answerIndex];
 
     if (!answer?.next) {
-      this.end();
       this.notify(StoryTellerStep.AfterNext);
+      this.end();
       return false;
     }
 
-    this.currentStory = answer.next;
+    // console.log(this.currentStory);
+    this.recordHistory(this.currentStory);
+    const nextStory =
+      this.stories.find((story) => story.id === answer.next) ?? null;
+    this.currentStory = nextStory;
     this.notify(StoryTellerStep.AfterNext);
     return true;
+  }
+
+  recordHistory(story: Story | null) {
+    if (!story) return;
+    const lastItem = getLastItem(this.histories);
+    if (lastItem === story) return;
+    if (this.histories.length === 0) {
+      this.histories.push(story);
+      return;
+    }
+    this.histories.push(story);
   }
 
   end() {

@@ -1,8 +1,14 @@
 import { StoryStatus } from "@enum/StoryStatus";
-import { Answer } from "@module/Answer";
 import { Story } from "@module/Story";
 import { StoryTeller } from "@module/StoryTeller";
 import { Logger } from "@util/Logger";
+import {
+  mainStory,
+  secondBranch1,
+  secondBranch2,
+  thirdBranch1,
+  thirdBranch2,
+} from "./storybook/mainstory/mainStory";
 
 const app = document.querySelector("#app");
 
@@ -11,30 +17,21 @@ const logger = new Logger();
 const storyTeller = new StoryTeller();
 
 storyTeller.storyline(
-  new Story({
-    title: "메인 스토리",
-    content: "날이 밝아온다.",
-    answers: [
-      new Answer({
-        content: "다음",
-        next: new Story({
-          title: "메인 스토리",
-          content: "날이 저문다",
-          answers: [
-            new Answer({
-              content: "끝",
-            }),
-          ],
-        }),
-      }),
-    ],
-  })
+  mainStory,
+  secondBranch1,
+  secondBranch2,
+  thirdBranch1,
+  thirdBranch2
 );
 
 function renderPage(story: Story | null) {
   if (
     !story ||
-    !storyTeller.isStatusEqualsTo(StoryStatus.Start, StoryStatus.Talk)
+    !storyTeller.isStatusEqualsTo(
+      StoryStatus.Start,
+      StoryStatus.Talk,
+      StoryStatus.End
+    )
   ) {
     logger.error("렌더 취소");
     return;
@@ -44,14 +41,25 @@ function renderPage(story: Story | null) {
   mainWrap.id = "main";
   const wrap = document.createElement("div");
   wrap.id = "wrap";
+  const group = document.createElement("div");
   const title = document.createElement("h3");
   const content = document.createElement("div");
   const answerWrap = document.createElement("div");
-  answerWrap.id = "answerWrap";
+  const prevButton = document.createElement("button");
 
+  if (story.cover) {
+    mainWrap.style.setProperty("--cover", `url(${story.cover})`);
+  }
+
+  title.id = "title";
   title.innerHTML = story.title;
+  content.id = "content";
   content.innerHTML = story.content;
 
+  group.id = "group";
+  group.append(title, content);
+  
+  answerWrap.id = "answerWrap";
   answerWrap.append(
     ...story.answers.map((answer, i) => {
       const item = document.createElement("div");
@@ -62,10 +70,18 @@ function renderPage(story: Story | null) {
     })
   );
 
-  wrap.append(title, content, answerWrap);
+  prevButton.id = "prev";
+  prevButton.innerText = "이전";
+
+  wrap.append(group, answerWrap, prevButton);
   mainWrap.append(wrap);
 
   app?.insertAdjacentElement("beforeend", mainWrap);
+}
+
+function refresh() {
+  app?.querySelector("#main")?.remove();
+  renderPage(storyTeller.getCurrentStory());
 }
 
 storyTeller.start();
@@ -73,6 +89,13 @@ renderPage(storyTeller.getCurrentStory());
 
 window.addEventListener("click", (e) => {
   const target = e.target as HTMLElement;
+  const isPrev = target.id === "prev";
+  if (isPrev) {
+    storyTeller.prev();
+    refresh();
+    return;
+  }
+
   const isAnswer = target.classList.contains("answer");
   if (!isAnswer) return;
 
@@ -90,8 +113,7 @@ window.addEventListener("click", (e) => {
 
   const isNext = storyTeller.next(answerIndex);
   if (isNext) {
-    app?.querySelector("#main")?.remove();
-    renderPage(storyTeller.getCurrentStory());
+    refresh();
   } /* else {
     app?.querySelector("#main")?.remove();
     renderPage(storyTeller.getCurrentStory());
